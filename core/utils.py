@@ -77,7 +77,7 @@ def draw_bbox(image, bboxes, classes=read_class_names(cfg.YOLO.CLASSES), show_la
 
     for i, bbox in enumerate(bboxes):
         coor = np.array(bbox[:4], dtype=np.int32)
-        fontScale = 0.5
+        fontScale = 0.9
         score = bbox[4]
         class_ind = int(bbox[5])
         bbox_color = colors[class_ind]

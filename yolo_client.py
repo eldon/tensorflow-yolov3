@@ -15,11 +15,13 @@ import cv2
 import numpy as np
 import core.utils as utils
 import tensorflow as tf
+from pathlib import Path
 from PIL import Image
 
 import base64
 import json
 import requests
+import sys
 
 SERVER_URL = 'http://localhost:18501/v1/models/yolo:predict'
 
@@ -28,7 +30,7 @@ IMAGE_URL = 'https://tensorflow.org/images/blogs/serving/cat.jpg'
 
 return_elements = ["input/input_data:0", "pred_sbbox/concat_2:0", "pred_mbbox/concat_2:0", "pred_lbbox/concat_2:0"]
 pb_file         = "./yolov3_coco.pb"
-image_path      = "./docs/images/road.jpeg"
+image_path      = (len(sys.argv) == 2 and sys.argv[1]) or "./docs/images/road.jpeg"
 num_classes     = 80
 input_size      = 416
 graph           = tf.Graph()
@@ -70,7 +72,7 @@ bboxes = utils.postprocess_boxes(pred_bbox, original_image_size, input_size, 0.3
 bboxes = utils.nms(bboxes, 0.45, method='nms')
 image = utils.draw_bbox(original_image, bboxes)
 image = Image.fromarray(image)
-image.save('result.jpg')
+image.save('result_' + Path(image_path).stem + '.jpg')
 
 
 
