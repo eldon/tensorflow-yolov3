@@ -41,7 +41,7 @@ original_image_size = original_image.shape[:2]
 image_data = utils.image_preporcess(np.copy(original_image), [input_size, input_size])
 image_data = image_data[np.newaxis, ...]
 
-return_tensors = utils.read_pb_return_tensors(graph, pb_file, return_elements)
+#return_tensors = utils.read_pb_return_tensors(graph, pb_file, return_elements)
 
 total_time = 0
 response = requests.post(
@@ -70,7 +70,7 @@ pred_bbox = np.concatenate(
 
 bboxes = utils.postprocess_boxes(pred_bbox, original_image_size, input_size, 0.3)
 bboxes = utils.nms(bboxes, 0.45, method='nms')
-image = utils.draw_bbox(original_image, bboxes)
+image = utils.draw_bbox(np.copy(original_image), bboxes)
 image = Image.fromarray(image)
 image.save('result_' + Path(image_path).stem + '.jpg')
 

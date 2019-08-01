@@ -30,10 +30,6 @@ sess  = tf.Session(config=tf.ConfigProto(allow_soft_placement=True))
 saver = tf.train.Saver()
 saver.restore(sess, ckpt_file)
 
-#builder = tf.saved_model.builder.SavedModelBuilder('/tmp/yolo/2')
-#builder.add_meta_graph_and_variables(sess, [tf.saved_model.tag_constants.SERVING],)
-#builder.save()
-
 tf.saved_model.simple_save(
     sess,
     '/tmp/yolo/1/',
@@ -44,15 +40,4 @@ tf.saved_model.simple_save(
         'conv_lbbox': tf.get_default_graph().get_tensor_by_name('pred_lbbox/concat_2:0'),
     },
 )
-
-
-#converted_graph_def = tf.graph_util.convert_variables_to_constants(sess,
-#                            input_graph_def  = sess.graph.as_graph_def(),
-#                            output_node_names = output_node_names)
-#
-#with tf.gfile.GFile(pb_file, "wb") as f:
-#    f.write(converted_graph_def.SerializeToString())
-
-
-
 
