@@ -28,12 +28,33 @@ SERVER_URL = 'http://localhost:18501/v1/models/yolo:predict'
 # The image URL is the location of the image we should send to the server
 IMAGE_URL = 'https://tensorflow.org/images/blogs/serving/cat.jpg'
 
+
+def get_crops_from_bounding_boxes(bounding_boxes, original_image):
+    bounding_boxes = np.asarray(bounding_boxes)
+
+    bbox_classes = bounding_boxes[:, 5]
+    tvmonitor = (bbox_classes == 62)
+    laptop = (bbox_classes == 63)
+    
+    cropped_images = []
+    for bbox in bounding_boxes[tvmonitor | laptop]:
+        width = bbox[2]-bbox[0]
+        height = bbox[3]-bbox[1]
+
+        x1 = int(max(0, bbox[0] - 0.1 * width))
+        y1 = int(max(0, bbox[1] - 0.1 * height))
+        x2 = int(min(bbox[2] + 0.1 * width, original_image.shape[1]))
+        y2 = int(min(bbox[3] + 0.1 * height, original_image.shape[0]))
+
+        cropped = original_image[y1:y2, x1:x2]
+        cropped_images.append(cropped)
+    return cropped_images
+
+
 return_elements = ["input/input_data:0", "pred_sbbox/concat_2:0", "pred_mbbox/concat_2:0", "pred_lbbox/concat_2:0"]
-pb_file         = "./yolov3_coco.pb"
 image_path      = (len(sys.argv) == 2 and sys.argv[1]) or "./docs/images/road.jpeg"
 num_classes     = 80
 input_size      = 416
-graph           = tf.Graph()
 
 original_image = cv2.imread(image_path)
 original_image = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)
@@ -41,9 +62,6 @@ original_image_size = original_image.shape[:2]
 image_data = utils.image_preporcess(np.copy(original_image), [input_size, input_size])
 image_data = image_data[np.newaxis, ...]
 
-#return_tensors = utils.read_pb_return_tensors(graph, pb_file, return_elements)
-
-total_time = 0
 response = requests.post(
     SERVER_URL,
     data=json.dumps({
@@ -53,11 +71,6 @@ response = requests.post(
 response.raise_for_status()
 predictions = response.json()['predictions'][0]
 
-
-#with tf.Session(graph=graph) as sess:
-#    pred_sbbox, pred_mbbox, pred_lbbox = sess.run(
-#        [return_tensors[1], return_tensors[2], return_tensors[3]],
-#                feed_dict={ return_tensors[0]: image_data})
 
 pred_bbox = np.concatenate(
     [
@@ -70,10 +83,6 @@ pred_bbox = np.concatenate(
 
 bboxes = utils.postprocess_boxes(pred_bbox, original_image_size, input_size, 0.3)
 bboxes = utils.nms(bboxes, 0.45, method='nms')
-image = utils.draw_bbox(np.copy(original_image), bboxes)
+image = utils.draw_bbox(original_image, bboxes)
 image = Image.fromarray(image)
 image.save('result_' + Path(image_path).stem + '.jpg')
-
-
-
-
